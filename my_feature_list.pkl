@@ -1,0 +1,14 @@
+(lp0
+S'poi'
+p1
+aS'rescaled_salary'
+p2
+aS'rescaled_to_poi_fraction'
+p3
+aS'rescaled_bonus'
+p4
+aS'rescaled_total_stock_value'
+p5
+aS'rescaled_total_payments'
+p6
+a.
