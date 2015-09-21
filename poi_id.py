@@ -152,12 +152,13 @@ labels, features = targetFeatureSplit(data)
 ### Select features
 from sklearn.feature_selection import SelectKBest
 from sklearn.tree import DecisionTreeClassifier
-
+from sklearn.cross_validation import KFold
+from sklearn.metrics import f1_score, precision_score, recall_score
+kf = KFold(n = len(features),n_folds=10,shuffle=True,random_state=42)
 for numOfFeatures in range(1,8):
     ch2 = SelectKBest(k=numOfFeatures)
     features_temp = ch2.fit_transform(features, labels)
     selected_feature_names = [features_list[i+1] for i in ch2.get_support(indices=True)]
-    print "selected features for trial:",selected_feature_names
     
     
     ### Task 4: Try a varity of classifiers
@@ -178,11 +179,12 @@ for numOfFeatures in range(1,8):
     # from sklearn.cross_validation import train_test_split
     # features_train, features_test, labels_train, labels_test = \
     #     train_test_split(features, labels, test_size=0.3, random_state=42)
-    from sklearn.cross_validation import KFold
-    from sklearn.metrics import f1_score, precision_score, recall_score
-    kf = KFold(n = len(features_temp),n_folds=10,shuffle=True,random_state=42)
+    
     
     dtF1Scores = []
+    dtPrecisionScores = []
+    dtRecallScores = []
+    print "\n\nPerforming KFold cross validation using Decision Tree Classifier using features:",selected_feature_names,"\n"
     for train_indices,test_indices in kf:
         features_train, features_test = [features_temp[i] for i in train_indices],[features_temp[i] for i in test_indices]
         labels_train, labels_test = [labels[i] for i in train_indices],[labels[i] for i in test_indices]   
@@ -191,16 +193,21 @@ for numOfFeatures in range(1,8):
         from sklearn.grid_search import GridSearchCV
         clf = GridSearchCV(dtc,param_grid = {"min_samples_split":[2,3,4,5,6,7,8,9,10,20,30,40],"max_depth":[2,3,4,5,6,7]})
         clf.fit(features_train, labels_train)
-        print "Decision Tree",clf.best_score_
-        print "Decision Tree",clf.best_params_
+#         print "Decision Tree",clf.best_score_
+        print "Decision Tree Parameters:",clf.best_params_
         predictions = clf.predict(features_test)    
         precisionScore = precision_score(y_true=labels_test,y_pred=predictions,pos_label=1)
         recallScore = recall_score(y_true=labels_test,y_pred=predictions,pos_label=1)
         f1Score = f1_score(y_true=labels_test,y_pred=predictions,pos_label=1)
-        print "For Decision Tree Classifier, f1:",f1Score,"precision:",precisionScore,"recallScore:",recallScore
+#         print "For Decision Tree Classifier, f1:",f1Score,"precision:",precisionScore,"recallScore:",recallScore
         dtF1Scores.append(f1Score)
+        dtPrecisionScores.append(precisionScore)
+        dtRecallScores.append(recallScore)
         
     svmF1Scores = []    
+    svmPrecisionScores = []
+    svmRecallScores = []
+    print "\n\nPerforming KFold cross validation using SVC using features:",selected_feature_names,"\n"
     for train_indices,test_indices in kf:
         features_train, features_test = [features_temp[i] for i in train_indices],[features_temp[i] for i in test_indices]
         labels_train, labels_test = [labels[i] for i in train_indices],[labels[i] for i in test_indices]   
@@ -209,20 +216,26 @@ for numOfFeatures in range(1,8):
         from sklearn.grid_search import GridSearchCV
         clf = GridSearchCV(svr,param_grid = {"C":[0.1,1,10,100,1000]})
         clf.fit(features_train, labels_train)
-        print "SVC",clf.best_score_
-        print "SVC",clf.best_params_
+#         print "SVC",clf.best_score_
+        print "SVC Parameters",clf.best_params_
         predictions = clf.predict(features_test)    
         precisionScore = precision_score(y_true=labels_test,y_pred=predictions,pos_label=1)
         recallScore = recall_score(y_true=labels_test,y_pred=predictions,pos_label=1)
         f1Score = f1_score(y_true=labels_test,y_pred=predictions,pos_label=1)
-        print "For SVM, f1:",f1Score,"precision:",precisionScore,"recallScore:",recallScore 
+#         print "For SVM, f1:",f1Score,"precision:",precisionScore,"recallScore:",recallScore 
         svmF1Scores.append(f1Score)
+        svmPrecisionScores.append(precisionScore)
+        svmRecallScores.append(recallScore)
     print "Average f1 score for DT",sum(dtF1Scores) * 1.0/len(dtF1Scores)
+    print "Average precision score for DT",sum(dtPrecisionScores) * 1.0/len(dtPrecisionScores)
+    print "Average recall score for DT",sum(dtRecallScores) * 1.0/len(dtRecallScores)
     print "Average f1 score for SVM",sum(svmF1Scores) * 1.0/len(svmF1Scores)
+    print "Average precision score for SVM",sum(svmPrecisionScores) * 1.0/len(svmPrecisionScores)
+    print "Average recall score for SVM",sum(svmRecallScores) * 1.0/len(svmRecallScores)
 
 #Preparing final classifier based on the observations from the above experiment with
 #different values
-ch2 = SelectKBest(k=5)
+ch2 = SelectKBest(k=4)
 features = ch2.fit_transform(features, labels)
 print "feature scores:",ch2.scores_
 selected_feature_names = [features_list[i+1] for i in ch2.get_support(indices=True)]
@@ -230,10 +243,11 @@ print "selected features for final classifier:",selected_feature_names
 features_list = ["poi"]
 for feature_name in selected_feature_names:
     features_list.append(feature_name)
-clf = DecisionTreeClassifier(min_samples_split=3,max_depth=5,random_state=42)
+clf = DecisionTreeClassifier(min_samples_split=2,max_depth=6,random_state=42)
 precisionScores = []
 recallScores = []
 f1Scores = []
+print "Evaluating performance of final classifier that we prepared from above experiments:"
 for train_indices,test_indices in kf:
     features_train, features_test = [features[i] for i in train_indices],[features[i] for i in test_indices]
     labels_train, labels_test = [labels[i] for i in train_indices],[labels[i] for i in test_indices]   
@@ -244,7 +258,7 @@ for train_indices,test_indices in kf:
     precisionScore = precision_score(y_true=labels_test,y_pred=predictions,pos_label=1)
     recallScore = recall_score(y_true=labels_test,y_pred=predictions,pos_label=1)
     f1Score = f1_score(y_true=labels_test,y_pred=predictions,pos_label=1)
-    print "For Decision Tree Classifier, f1:",f1Score,"precision:",precisionScore,"recallScore:",recallScore
+    print "In one of fold within KFolds For Decision Tree Classifier, f1:",f1Score,"precision:",precisionScore,"recallScore:",recallScore
     precisionScores.append(precisionScore)
     recallScores.append(recallScore)
     f1Scores.append(f1Score)

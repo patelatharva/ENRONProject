@@ -9,6 +9,4 @@ aS'rescaled_bonus'
 p4
 aS'rescaled_total_stock_value'
 p5
-aS'rescaled_total_payments'
-p6
 a.
