@@ -61,6 +61,7 @@ def test_classifier(clf, dataset, feature_list, folds = 1000):
                 print "Evaluating performance for processed predictions:"
                 break
     try:
+        print "tp",true_positives,"\ntn",true_negatives,"\nfp",false_positives,"\nfn",false_negatives
         total_predictions = true_negatives + false_negatives + false_positives + true_positives        
         accuracy = 1.0*(true_positives + true_negatives)/total_predictions
         print "accuracy",accuracy
